@@ -30,6 +30,11 @@ case object Encrypted extends SecurityLevel {
   override def applyTo[T](df: DataFrame) = df.encrypted
 }
 
+case object Oblivious extends SecurityLevel {
+  override def name = "oblivious"
+  override def applyTo[T](df: DataFrame) = df.oblivious
+}
+
 case object Insecure extends SecurityLevel {
   override def name = "spark sql"
   override def applyTo[T](df: DataFrame) = df

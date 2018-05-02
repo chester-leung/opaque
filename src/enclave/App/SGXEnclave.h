@@ -37,6 +37,9 @@ extern "C" {
   JNIEXPORT jbyteArray JNICALL Java_edu_berkeley_cs_rise_opaque_execution_SGXEnclave_ExternalSort(
     JNIEnv *, jobject, jlong, jbyteArray, jbyteArray);
 
+  JNIEXPORT jbyteArray JNICALL Java_edu_berkeley_cs_rise_opaque_execution_SGXEnclave_ObliviousSort(
+    JNIEnv *, jobject, jlong, jbyteArray, jbyteArray);
+
   JNIEXPORT jbyteArray JNICALL
   Java_edu_berkeley_cs_rise_opaque_execution_SGXEnclave_ScanCollectLastPrimary(
     JNIEnv *, jobject, jlong, jbyteArray, jbyteArray);

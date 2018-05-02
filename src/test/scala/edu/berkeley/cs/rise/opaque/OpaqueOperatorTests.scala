@@ -63,6 +63,15 @@ trait OpaqueOperatorTests extends FunSuite with BeforeAndAfterAll { self =>
     }
   }
 
+  def testAgainstSparkWithObliviousness(name: String)(f: SecurityLevel => Any): Unit = {
+    test(name + " - encrypted") {
+      assert(f(Encrypted) === f(Insecure))
+    }
+    test(name + " - oblivious") {
+      assert(f(Oblivious) === f(Insecure))
+    }
+  }
+
   def testOpaqueOnly(name: String)(f: SecurityLevel => Unit): Unit = {
     test(name + " - encrypted") {
       f(Encrypted)
@@ -88,7 +97,7 @@ trait OpaqueOperatorTests extends FunSuite with BeforeAndAfterAll { self =>
     df.filter($"x" > lit(10)).collect
   }
 
-  testAgainstSpark("select") { securityLevel =>
+  testAgainstSparkWithObliviousness("select") { securityLevel =>
     val data = for (i <- 0 until 256) yield ("%03d".format(i) * 3, i.toFloat)
     val df = makeDF(data, securityLevel, "str", "x")
     df.select($"str").collect
@@ -139,7 +148,7 @@ trait OpaqueOperatorTests extends FunSuite with BeforeAndAfterAll { self =>
     assert(agg.collect.toSet === expected.map(Row.fromTuple).toSet)
   }
 
-  testAgainstSpark("sort") { securityLevel =>
+  testAgainstSparkWithObliviousness("sort") { securityLevel =>
     val data = Random.shuffle((0 until 256).map(x => (x.toString, x)).toSeq)
     val df = makeDF(data, securityLevel, "str", "x")
     df.sort($"x").collect

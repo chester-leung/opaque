@@ -327,6 +327,16 @@ public:
     maybe_finish_block();
   }
 
+  void write(const tuix::EncryptedBlocks *blocks) {
+    for (auto& block : blocks->blocks()) {
+      enc_block_vector.push_back(
+      tuix::CreateEncryptedBlock(
+        enc_block_builder,
+        block->num_rows(),
+        enc_block_builder.CreateVector(block->enc_rows(), block->enc_rows()->size())));
+    }
+  }
+
   /**
    * Concatenate the fields of the two given Rows and write the resulting single Row to the output.
    */

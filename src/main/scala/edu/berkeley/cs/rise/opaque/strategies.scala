@@ -1,5 +1,5 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
+
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
  * The ASF licenses this file to You under the Apache License, Version 2.0
@@ -38,11 +38,17 @@ object OpaqueOperators extends Strategy {
     case EncryptedProject(projectList, child) =>
       ObliviousProjectExec(projectList, planLater(child)) :: Nil
 
+    case ObliviousProject(projectList, child) =>
+      ObliviousProjectExec(projectList, planLater(child)) :: Nil
+
     case EncryptedFilter(condition, child) =>
       ObliviousFilterExec(condition, planLater(child)) :: Nil
 
     case EncryptedSort(order, child) =>
       EncryptedSortExec(order, planLater(child)) :: Nil
+
+    case ObliviousSort(order, child) =>
+      ObliviousSortExec(order, planLater(child)) :: Nil
 
     case EncryptedJoin(left, right, joinType, condition) =>
       Join(left, right, joinType, condition) match {
