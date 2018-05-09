@@ -2,6 +2,7 @@
 
 #include <climits>
 #include <cstdio>
+#include <math.h>
 
 #include "Enclave_t.h"
 
@@ -42,6 +43,18 @@ void clear(uint8_t *dest, uint32_t len) {
   for (uint32_t i = 0; i < len; i++) {
     *(dest + i) = 0;
   }
+}
+
+int log_2(int value) {
+  double dvalue = (double) value;
+  int log_value = (int) ceil(log(dvalue) / log(2.0));
+  return log_value;
+}
+
+int pow_2(int value) {
+  double dvalue = (double) value;
+  int pow_value = (int) pow(2, dvalue);
+  return pow_value;
 }
 
 /// From http://git.musl-libc.org/cgit/musl/tree/src/time/__secs_to_tm.c?h=v0.9.15

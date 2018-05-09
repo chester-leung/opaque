@@ -10,6 +10,7 @@
 #include "Project.h"
 #include "Sort.h"
 #include "isv_enclave.h"
+#include "ObliviousSort.h"
 
 void ecall_encrypt(uint8_t *plaintext, uint32_t plaintext_length,
                    uint8_t *ciphertext, uint32_t cipher_length) {
