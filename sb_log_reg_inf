@@ -2,10 +2,10 @@ import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.Column
 import edu.berkeley.cs.rise.opaque.expressions.DotProduct.dot
 
-val dir = "/sbnda/data/synthetic"
-val table1 = spark.read.format("csv").option("header", "true").load(s"$dir/riselab_table1.csv.gz")
-val table2 = spark.read.format("csv").option("header", "true").load(s"$dir/riselab_table2.csv.gz")
-val table3 = spark.read.format("csv").option("header", "true").load(s"$dir/riselab_table3.csv.gz")
+val dir = "/root/sbnda"
+val table1 = spark.read.format("csv").option("header", "true").load(s"$dir/riselab_table1.csv.gz").repartition(3).encrypted
+val table2 = spark.read.format("csv").option("header", "true").load(s"$dir/riselab_table2.csv.gz").repartition(3).encrypted
+val table3 = spark.read.format("csv").option("header", "true").load(s"$dir/riselab_table3.csv.gz").repartition(3).encrypted
 val joined = table1.join(table2.drop("DEF_IND").join(table3.drop("DEF_IND"), "CUST_REF"), "CUST_REF").drop("CUST_REF")
 
 /** Expand a categorical column into multiple columns, one for each category. */
@@ -34,7 +34,7 @@ val data = withCategories.select(
     $"ATRR_7_cat_atrr_7_003".cast(DoubleType),
     $"ATRR_7_cat_atrr_7_004".cast(DoubleType),
     $"ATRR_7_cat_atrr_7_005".cast(DoubleType))
-    .as("x")).encrypted
+    .as("x"))
 
 // Pre-trained logistic regression model from sklearn
 // Model coefficients
