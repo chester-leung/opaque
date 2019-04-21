@@ -54,6 +54,7 @@ Utils.timeBenchmark("case" -> "plaintext") {
     $"y_truth" === lit(0) && $"prediction" < lit(0.5) ||
       $"y_truth" === lit(1) && $"prediction" >= lit(0.5)).count
 
+  println(f"Correct Predictions: $numCorrect / 1,000,000")
 }
 
 Utils.timeBenchmark("case" -> "encrypted inference") {
@@ -90,6 +91,8 @@ Utils.timeBenchmark("case" -> "encrypted inference") {
   val numCorrect = predictions.filter(
     $"y_truth" === lit(0) && $"prediction" < lit(0.5) ||
       $"y_truth" === lit(1) && $"prediction" >= lit(0.5)).count
+  
+  println(f"Correct Predictions: $numCorrect / 1,000,000")
 }
 
 Utils.timeBenchmark("case" -> "end to end encrypted pipeline") {
@@ -126,4 +129,6 @@ Utils.timeBenchmark("case" -> "end to end encrypted pipeline") {
   val numCorrect = predictions.filter(
     $"y_truth" === lit(0) && $"prediction" < lit(0.5) ||
       $"y_truth" === lit(1) && $"prediction" >= lit(0.5)).count
+
+  println(f"Correct Predictions: $numCorrect / 1,000,000")
 }
