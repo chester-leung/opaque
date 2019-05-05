@@ -20,13 +20,17 @@ def getDummies(d: DataFrame, col: String): DataFrame = {
 }
 
 Utils.timeBenchmark("case" -> "plaintext") {
+  var dir = null
+  var table1 = null
+  var table2 = null
+  var table3 = null
   Utils.timeBenchmark("case" -> "plaintext", "step" -> "load data") {
-    val dir = "/sbnda/data/synthetic"
-    val table1 = Utils.ensureCached(spark.read.format("csv").option("header", "true").load(s"$dir/riselab_table1.csv.gz"))
+    dir = "/sbnda/data/synthetic"
+    table1 = Utils.ensureCached(spark.read.format("csv").option("header", "true").load(s"$dir/riselab_table1.csv.gz"))
     Utils.force(table1)
-    val table2 = Utils.ensureCached(spark.read.format("csv").option("header", "true").load(s"$dir/riselab_table2.csv.gz"))
+    table2 = Utils.ensureCached(spark.read.format("csv").option("header", "true").load(s"$dir/riselab_table2.csv.gz"))
     Utils.force(table2)
-    val table3 = Utils.ensureCached(spark.read.format("csv").option("header", "true").load(s"$dir/riselab_table3.csv.gz"))
+    table3 = Utils.ensureCached(spark.read.format("csv").option("header", "true").load(s"$dir/riselab_table3.csv.gz"))
     Utils.force(table3)
   }
 
