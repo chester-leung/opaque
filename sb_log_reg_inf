@@ -19,6 +19,44 @@ def getDummies(d: DataFrame, col: String): DataFrame = {
   expanded.drop(col)
 }
 
+Utils.timeBenchmark("case" -> "plaintext no cache") {
+  val dir = "/sbnda/data/synthetic"
+  val table1 = spark.read.format("csv").option("header", "true").load(s"$dir/riselab_table1.csv.gz")
+  val table2 = spark.read.format("csv").option("header", "true").load(s"$dir/riselab_table2.csv.gz")
+  val table3 = spark.read.format("csv").option("header", "true").load(s"$dir/riselab_table3.csv.gz")
+  val joined = table1.join(table2.drop("DEF_IND").join(table3.drop("DEF_IND"), "CUST_REF"), "CUST_REF").drop("CUST_REF")
+
+  val withCategories = getDummies(getDummies(joined, "ATRR_76"), "ATRR_7")
+  val data = withCategories.select(
+    $"DEF_IND".cast(IntegerType).as("y_truth"),
+    array(
+      $"ATRR_35".cast(DoubleType),
+      $"ATRR_36".cast(DoubleType),
+      $"ATRR_76_cat_atrr_76_000".cast(DoubleType),
+      $"ATRR_7_cat_atrr_7_000".cast(DoubleType),
+      $"ATRR_7_cat_atrr_7_001".cast(DoubleType),
+      $"ATRR_7_cat_atrr_7_003".cast(DoubleType),
+      $"ATRR_7_cat_atrr_7_004".cast(DoubleType),
+      $"ATRR_7_cat_atrr_7_005".cast(DoubleType))
+      .as("x"))
+
+  // Pre-trained logistic regression model from sklearn
+  // Model coefficients
+  val w = array(lit(1.08256682),  lit(0.85389337), lit(-0.30765509),  lit(3.26552064),  lit(2.43142285), lit(-2.35156746), lit(-4.00728388), lit(-5.74680168))
+  // Model intercept
+  val b = lit(-7.20533994)
+
+  val predictions = data.select(
+    $"y_truth", (lit(1.0) / (lit(1.0) + exp(-(dot(w, $"x") + b)))).as("prediction"))
+
+  // Count the number of correct predictions. Expected: 955543 out of 1000000
+  val numCorrect = predictions.filter(
+    $"y_truth" === lit(0) && $"prediction" < lit(0.5) ||
+      $"y_truth" === lit(1) && $"prediction" >= lit(0.5)).count
+  
+  println(f"Correct Predictions: $numCorrect / 1,000,000")
+}
+
 Utils.timeBenchmark("case" -> "plaintext") {
   var start = System.nanoTime
   val dir = "/sbnda/data/synthetic"
@@ -76,44 +114,6 @@ Utils.timeBenchmark("case" -> "plaintext") {
 
   println(f"Correct Predictions: $numCorrect / 1,000,000")
 
-}
-
-Utils.timeBenchmark("case" -> "plaintext no cache") {
-  val dir = "/sbnda/data/synthetic"
-  val table1 = spark.read.format("csv").option("header", "true").load(s"$dir/riselab_table1.csv.gz")
-  val table2 = spark.read.format("csv").option("header", "true").load(s"$dir/riselab_table2.csv.gz")
-  val table3 = spark.read.format("csv").option("header", "true").load(s"$dir/riselab_table3.csv.gz")
-  val joined = table1.join(table2.drop("DEF_IND").join(table3.drop("DEF_IND"), "CUST_REF"), "CUST_REF").drop("CUST_REF")
-
-  val withCategories = getDummies(getDummies(joined, "ATRR_76"), "ATRR_7")
-  val data = withCategories.select(
-    $"DEF_IND".cast(IntegerType).as("y_truth"),
-    array(
-      $"ATRR_35".cast(DoubleType),
-      $"ATRR_36".cast(DoubleType),
-      $"ATRR_76_cat_atrr_76_000".cast(DoubleType),
-      $"ATRR_7_cat_atrr_7_000".cast(DoubleType),
-      $"ATRR_7_cat_atrr_7_001".cast(DoubleType),
-      $"ATRR_7_cat_atrr_7_003".cast(DoubleType),
-      $"ATRR_7_cat_atrr_7_004".cast(DoubleType),
-      $"ATRR_7_cat_atrr_7_005".cast(DoubleType))
-      .as("x"))
-
-  // Pre-trained logistic regression model from sklearn
-  // Model coefficients
-  val w = array(lit(1.08256682),  lit(0.85389337), lit(-0.30765509),  lit(3.26552064),  lit(2.43142285), lit(-2.35156746), lit(-4.00728388), lit(-5.74680168))
-  // Model intercept
-  val b = lit(-7.20533994)
-
-  val predictions = data.select(
-    $"y_truth", (lit(1.0) / (lit(1.0) + exp(-(dot(w, $"x") + b)))).as("prediction"))
-
-  // Count the number of correct predictions. Expected: 955543 out of 1000000
-  val numCorrect = predictions.filter(
-    $"y_truth" === lit(0) && $"prediction" < lit(0.5) ||
-      $"y_truth" === lit(1) && $"prediction" >= lit(0.5)).count
-  
-  println(f"Correct Predictions: $numCorrect / 1,000,000")
 }
 
 
