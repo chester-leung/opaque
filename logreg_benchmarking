@@ -205,7 +205,7 @@ Utils.timeBenchmark("case" -> "encrypted pipeline") {
   var start = System.nanoTime
   val dir = "/sbnda/data/synthetic"
   println("table 1")
-  val table1 = spark.read.format("csv").option("header", "true").load(s"$dir/riselab_table1.csv.gz").repartition(30).encrypted
+  var table1 = spark.read.format("csv").option("header", "true").load(s"$dir/riselab_table1.csv.gz").repartition(30).encrypted
   table1 = Utils.ensureCached(table1.select(
       $"DEF_IND",
       $"ATRR_76",
@@ -213,7 +213,7 @@ Utils.timeBenchmark("case" -> "encrypted pipeline") {
       ))
   Utils.force(table1)
   println("table 2")
-  val table2 = spark.read.format("csv").option("header", "true").load(s"$dir/riselab_table2.csv.gz").repartition(30).encrypted
+  var table2 = spark.read.format("csv").option("header", "true").load(s"$dir/riselab_table2.csv.gz").repartition(30).encrypted
   table2 = Utils.ensureCached(table2.select(
       $"DEF_IND",
       $"ATRR_36",
@@ -223,7 +223,7 @@ Utils.timeBenchmark("case" -> "encrypted pipeline") {
       ))
   Utils.force(table2)
   println("table 3")
-  val table3 = spark.read.format("csv").option("header", "true").load(s"$dir/riselab_table3.csv.gz").repartition(30).encrypted
+  var table3 = spark.read.format("csv").option("header", "true").load(s"$dir/riselab_table3.csv.gz").repartition(30).encrypted
   table3 = Utils.ensureCached(table3.select(
       $"DEF_IND",
       $"CUST_REF"
