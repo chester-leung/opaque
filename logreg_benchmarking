@@ -69,15 +69,14 @@ Utils.timeBenchmark("case" -> "plaintext") {
   println("table 2")
   val table2 = Utils.ensureCached(spark.read.format("csv").option("header", "true").load(s"$dir/riselab_table2.csv.gz").select(
       $"DEF_IND".cast(IntegerType),
-      $"ATRR_76".cast(DoubleType)
+      $"ATRR_36".cast(DoubleType),
+      $"ATRR_35".cast(DoubleType),
       ))
   Utils.force(table2)
   println("table 3")
   val table3 = Utils.ensureCached(spark.read.format("csv").option("header", "true").load(s"$dir/riselab_table3.csv.gz").select(
       $"DEF_IND".cast(IntegerType),
-      $"ATRR_36".cast(DoubleType),
       $"ATRR_76".cast(DoubleType),
-      $"ATRR_35".cast(DoubleType),
       $"ATRR_7"))
   Utils.force(table3)
   var time = (System.nanoTime - start) / 1000000.0
