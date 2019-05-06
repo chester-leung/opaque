@@ -1,0 +1,13 @@
+:load sb_log_reg_inf
+Loading sb_log_reg_inf...
+import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.Column
+import edu.berkeley.cs.rise.opaque.expressions.DotProduct.dot
+import edu.berkeley.cs.rise.opaque.Utils
+getDummies: (d: org.apache.spark.sql.DataFrame, col: String)org.apache.spark.sql.DataFrame
+Correct Predictions: 955543 / 1,000,000
+19/04/21 17:00:30 INFO Utils: {"case": "plaintext", "time": 76825.461666, "sgx": "sim"}
+Correct Predictions: 955543 / 1,000,000
+19/04/21 17:02:15 INFO Utils: {"case": "encrypted inference", "time": 104781.349507, "sgx": "sim"}
+Correct Predictions: 955543 / 1,000,000
+19/04/21 17:27:50 INFO Utils: {"case": "end to end encrypted pipeline", "time": 1534347.517044, "sgx": "sim"}
