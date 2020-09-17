@@ -58,6 +58,7 @@ bool RowReader::has_next() {
 
 const tuix::Row *RowReader::next() {
   // Note: this will invalidate any pointers returned by previous invocations of this method
+  // Go to next EncryptedBlock if we're finished reading all rows in this EncryptedBlock
   if (!block_reader.has_next()) {
     assert(block_idx + 1 < encrypted_blocks->blocks()->size());
     block_idx++;

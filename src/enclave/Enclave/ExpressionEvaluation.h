@@ -4,6 +4,7 @@
 #include <typeinfo>
 #include <cmath>
 #include <limits>
+#include <iostream>
 
 #include "Flatbuffers.h"
 
@@ -44,6 +45,7 @@ flatbuffers::Offset<tuix::Field> eval_binary_arithmetic_op(
     auto result = Operation<int32_t>()(
       static_cast<const tuix::IntegerField *>(left->value())->value(),
       static_cast<const tuix::IntegerField *>(right->value())->value());
+    std::cout << "Result: " << result << std::endl;
     // Writing the result invalidates the left and right temporary pointers
     return tuix::CreateField(
       builder,
@@ -402,7 +404,9 @@ private:
     {
       auto add = static_cast<const tuix::Add *>(expr->expr());
       auto left_offset = eval_helper(row, add->left());
+      // std::cout << "add left: " << add->left() << std::endl;
       auto right_offset = eval_helper(row, add->right());
+      // std::cout << "add right: " << add->right() << std::endl;
       return eval_binary_arithmetic_op<tuix::Add, std::plus>(
         builder,
         flatbuffers::GetTemporaryPointer(builder, left_offset),
@@ -411,6 +415,7 @@ private:
 
     case tuix::ExprUnion_Subtract:
     {
+      // LOOKING AT expr->expr()
       auto subtract = static_cast<const tuix::Subtract *>(expr->expr());
       auto left_offset = eval_helper(row, subtract->left());
       auto right_offset = eval_helper(row, subtract->right());
@@ -424,7 +429,9 @@ private:
     {
       auto multiply = static_cast<const tuix::Multiply *>(expr->expr());
       auto left_offset = eval_helper(row, multiply->left());
+      // std::cout << "multiply left: " << multiply->left() << std::endl;
       auto right_offset = eval_helper(row, multiply->right());
+      // std::cout << "multiply right: " << multiply->right() << std::endl;
       return eval_binary_arithmetic_op<tuix::Multiply, std::multiplies>(
         builder,
         flatbuffers::GetTemporaryPointer(builder, left_offset),
@@ -575,7 +582,9 @@ private:
     {
       auto gt = static_cast<const tuix::GreaterThan *>(expr->expr());
       auto left_offset = eval_helper(row, gt->left());
+      // std::cout << "left: " << gt->left() << std::endl;
       auto right_offset = eval_helper(row, gt->right());
+      // std::cout << "right: " << gt->right() << std::endl;
       return eval_binary_comparison<tuix::GreaterThan, std::greater>(
         builder,
         flatbuffers::GetTemporaryPointer(builder, left_offset),
