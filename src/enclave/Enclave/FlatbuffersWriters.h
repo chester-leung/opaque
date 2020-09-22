@@ -64,6 +64,52 @@ private:
   friend class SortedRunsWriter;
 };
 
+class ColWriter {
+public:
+  ColWriter()
+    : builder(), cols_vector(), total_num_rows(0), untrusted_alloc(),
+      enc_block_builder(1024, &untrusted_alloc), finished(false) {}
+
+  void clear();
+
+  /** Append the given Row. */
+  void append(const tuix::Row *row);
+
+  /** Append the given `Field`s as a Row. */
+  void append(const std::vector<const tuix::Field *> &row_fields);
+
+  /** Concatenate the fields of the two given `Row`s and append the resulting single Row. */
+  void append(const tuix::Row *row1, const tuix::Row *row2);
+
+  /** Expose the stored rows as a buffer. */
+  UntrustedBufferRef<tuix::EncryptedBlocks> output_buffer();
+
+  /** Expose the stored rows as a buffer. The caller takes ownership of the resulting buffer. */
+  void output_buffer(uint8_t **output_rows, size_t *output_rows_length);
+
+  /** Count how many rows have been appended. */
+  uint32_t num_rows();
+
+private:
+  void maybe_finish_block();
+  void finish_block();
+  flatbuffers::Offset<tuix::EncryptedBlocks> finish_blocks();
+
+  flatbuffers::FlatBufferBuilder col_builder;
+  std::vector<flatbuffers::Offset<tuix::Col>> cols_vector;
+  uint32_t total_num_rows;
+  uint32_t total_num_cols;
+
+  // For writing the resulting EncryptedBlocks
+  UntrustedMemoryAllocator untrusted_alloc;
+  flatbuffers::FlatBufferBuilder enc_col_block_builder;
+  std::vector<flatbuffers::Offset<tuix::EncryptedBlock>> enc_col_block_vector;
+
+  bool finished;
+
+  // friend class SortedRunsWriter;
+};
+
 /** Append-only container for rows wrapped in tuix::SortedRuns. */
 class SortedRunsWriter {
 public:
