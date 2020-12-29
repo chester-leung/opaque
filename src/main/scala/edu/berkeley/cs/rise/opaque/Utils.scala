@@ -1481,39 +1481,105 @@ object Utils extends Logging {
     Block(builder.sizedByteArray())
   }
 
-  // def emptyBlock(block: Block): Block = {
-  //   val builder = new FlatBufferBuilder
-  //   val encryptedBlocks = tuix.EncryptedBlocks.getRootAsEncryptedBlocks(ByteBuffer.wrap(block.bytes))
-  //   val pastLogEntries = for {
-  //     i <- 0 until encryptedBlocks.log.pastEntriesLength
-  //   } yield encryptedBlocks.log.pastEntries(i)
-  // 
-  //   val currLogEntry = encryptedBlocks.log.currEntries(0)
-  // 
-  //   val logEntries = pastLogEntries :+ currLogEntry
-  // 
-  //   val numPastEntries = encryptedBlocks.log.numPastEntries(0)
-  // 
-  //   builder.finish(
-  //     tuix.EncryptedBlocks.createEncryptedBlocks(
-  //       builder, 
-  //       tuix.EncryptedBlocks.createBlocksVector(builder, Array.empty), 
-  //       tuix.LogEntryChain.createLogEntryChain(builder,
-  //         tuix.LogEntryChain.createCurrEntriesVector(builder, 
-  //           Array.empty),
-  //       tuix.LogEntryChain.createPastEntriesVector(builder, logEntries.map { logEntry =>
-  //         tuix.LogEntry.createLogEntry(
-  //           builder,
-  //           logEntry.ecall,
-  //           logEntry.sndPid,
-  //           logEntry.rcvPid,
-  //           logEntry.jobId,
-  //           0,
-  //           tuix.LogEntry.createMacLstVector(builder, Array.empty),
-  //           tuix.LogEntry.createMacLstMacVector(builder, Array.empty)
-  //       )}.toArray),
-  //       tuix.LogEntryChain.createNumPastEntriesVector(builder, Array(numPastEntries))),
-  //     tuix.EncryptedBlocks.createLogMacVector(builder, Array.empty)))
-  //   Block(builder.sizedByteArray())
-  // }
+  def emptyBlock(block: Block): Block = {
+    val builder = new FlatBufferBuilder
+    val encryptedBlocks = tuix.EncryptedBlocks.getRootAsEncryptedBlocks(ByteBuffer.wrap(block.bytes))
+    val pastCrumbs = for {
+      i <- 0 until encryptedBlocks.log.pastEntriesLength
+    } yield encryptedBlocks.log.pastEntries(i)
+  
+    val currLogEntry = encryptedBlocks.log.currEntries(0)
+
+    val ecall = currLogEntry.ecall
+
+    val inputMacs = new Array[Byte](currLogEntry.inputMacsLength)
+    currLogEntry.inputMacsAsByteBuffer.get(inputMacs)
+
+    val numInputMacs = currLogEntry.numInputMacs
+
+    // Get all_outputs_mac from EncryptedBlocks
+    val allOutputsMac = new Array[Byte](encryptedBlocks.allOutputsMacLength)
+    encryptedBlocks.allOutputsMacAsByteBuffer.get(allOutputsMac)
+
+    // Get log_mac from EncryptedBlocks
+    val encryptedBlocksLogMac = encryptedBlocks.logMac(0)
+    val logMac = new Array[Byte](encryptedBlocks.logMacLength)
+    encryptedBlocksLogMac.macAsByteBuffer.get(logMac)
+
+    // val newCrumb = tuix.Crumb.createCrumb(
+    //   builder,
+    //   tuix.Crumb.createInputMacsVector(builder, inputMacs),
+    //   numInputMacs,
+    //   tuix.Crumb.createAllOutputsMacVector(builder, allOutputsMac),
+    //   ecall,
+    //   tuix.Crumb.createLogMacVector(builder, logMac)
+    // )
+    //
+
+    // val logEntries = new Array[Int](1)
+    val reserializedLogEntry = tuix.LogEntry.createLogEntry(
+      builder,
+      ecall,
+      0,
+      tuix.LogEntry.createMacLstVector(builder, Array.empty),
+      tuix.LogEntry.createMacLstMacVector(builder, Array.empty),
+      tuix.LogEntry.createInputMacsVector(builder, inputMacs),
+      numInputMacs
+      )
+    // logEntries(0) = reserializedLogEntry
+
+    val numPastEntries = encryptedBlocks.log.numPastEntries(0)
+
+    // TODO: get type of offset
+    var oldCrumbs = new Array[Int](numPastEntries)
+    var i = 0
+
+    for (crumb <- pastCrumbs) {
+      val crumbInputMacs = new Array[Byte](crumb.inputMacsLength)
+      crumb.inputMacsAsByteBuffer.get(crumbInputMacs)
+
+      val crumbNumInputMacs = crumb.numInputMacs
+
+      val crumbAllOutputsMac = new Array[Byte](crumb.allOutputsMacLength)
+      crumb.allOutputsMacAsByteBuffer.get(crumbAllOutputsMac)
+
+      val crumbEcall = crumb.ecall
+
+      val crumbLogMac = new Array[Byte](crumb.logMacLength)
+      crumb.logMacAsByteBuffer.get(crumbLogMac)
+
+      val oldCrumb = tuix.Crumb.createCrumb(
+        builder,
+        tuix.Crumb.createInputMacsVector(builder, crumbInputMacs),
+        crumbNumInputMacs,
+        tuix.Crumb.createAllOutputsMacVector(builder, crumbAllOutputsMac),
+        crumbEcall,
+        tuix.Crumb.createLogMacVector(builder, crumbLogMac)
+        )
+      oldCrumbs(i) = oldCrumb
+      i += 1
+    }
+
+    // crumbs(numPastEntries - 1) = newCrumb
+
+    // TODO: get type of crumbs
+    // Do we need to serialize and reserialize past crumbs
+    // val crumbs = pastCrumbs :+ newCrumb
+
+    // val logEntries = pastLogEntries :+ currLogEntry
+  
+  
+    builder.finish(
+      tuix.EncryptedBlocks.createEncryptedBlocks(
+        builder, 
+        tuix.EncryptedBlocks.createBlocksVector(builder, Array.empty), 
+        tuix.LogEntryChain.createLogEntryChain(builder,
+          tuix.LogEntryChain.createCurrEntriesVector(builder, Array(reserializedLogEntry)),
+          tuix.LogEntryChain.createPastEntriesVector(builder, oldCrumbs),
+        tuix.LogEntryChain.createNumPastEntriesVector(builder, Array(numPastEntries))),
+      tuix.EncryptedBlocks.createLogMacVector(builder, 
+        Array(tuix.Mac.createMacVector(builder, logMac))),
+      tuix.EncryptedBlocks.createAllOutputsMacVector(builder, allOutputsMac)))
+    Block(builder.sizedByteArray())
+  }
 }
