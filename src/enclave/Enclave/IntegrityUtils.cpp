@@ -8,6 +8,7 @@ void init_log(const tuix::EncryptedBlocks *encrypted_blocks) {
   auto past_entries_vec = encrypted_blocks->log()->past_entries(); // of type Crumb
 
   // Store received crumbs
+  std::cout << "Getting past crumbs" << std::endl;
   for (uint32_t i = 0; i < past_entries_vec->size(); i++) {
     auto crumb = past_entries_vec->Get(i);
     int crumb_ecall = crumb->ecall();
@@ -29,6 +30,7 @@ void init_log(const tuix::EncryptedBlocks *encrypted_blocks) {
     new_crumb.input_log_macs = crumb_vector_input_macs;
     crumbs.push_back(new_crumb);
   }
+  std::cout << "Got past crumbs" << std::endl;
 
   if (curr_entries_vec->size() > 0) {
     verify_log(encrypted_blocks, crumbs);
@@ -37,17 +39,21 @@ void init_log(const tuix::EncryptedBlocks *encrypted_blocks) {
   // Master list of mac lists of all input partitions
   std::vector<std::vector<std::vector<uint8_t>>> partition_mac_lsts;
 
+  std::cout << "Retrieving all outputs mac" << std::endl;
   const uint8_t* mac_inputs = encrypted_blocks->all_outputs_mac()->data();
+  std::cout << "Retrieved all outputs mac" << std::endl;
   int all_outputs_mac_index = 0;
 
   // Check that each input partition's mac_lst_mac is indeed a HMAC over the mac_lst
   for (uint32_t i = 0; i < curr_entries_vec->size(); i++) {
+      std::cout << "Getting curr log entry" << std::endl;
     auto input_log_entry = curr_entries_vec->Get(i);
 
     // Retrieve mac_lst and mac_lst_mac
     const uint8_t* mac_lst_mac = input_log_entry->mac_lst_mac()->data();
     int num_macs = input_log_entry->num_macs();
     const uint8_t* mac_lst = input_log_entry->mac_lst()->data();
+    std::cout << "Got curr log entry" << std::endl;
     
     uint8_t computed_hmac[OE_HMAC_SIZE];
     mcrypto.hmac(mac_lst, num_macs * SGX_AESGCM_MAC_SIZE, computed_hmac);
@@ -87,9 +93,11 @@ void init_log(const tuix::EncryptedBlocks *encrypted_blocks) {
     //     std::cout << (int) mac_input[j] << " ";
     // }
     // std::cout << std::endl;
+    std::cout << "Retrieving log mac (and appending everything else)" << std::endl;
     EnclaveContext::getInstance().append_crumb(
         logged_ecall, encrypted_blocks->log_mac()->Get(i)->mac()->data(), 
         mac_input, num_prev_input_macs, vector_prev_input_macs);
+    std::cout << "Got log mac" << std::endl;
 
     std::vector<uint8_t> mac_input_vector(mac_input, mac_input + OE_HMAC_SIZE);
     EnclaveContext::getInstance().append_input_mac(mac_input_vector);
